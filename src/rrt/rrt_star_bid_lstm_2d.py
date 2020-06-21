@@ -139,12 +139,15 @@ class RRTStarBidirectional_LSTM(RRTStar):
         self.add_vertex(1, self.x_goal)
         self.add_edge(1, self.x_goal, None)
 
+	self.x_lstm = self.x_init
+
         while True:
             for q in self.Q:  # iterate over different edge lengths
                 for i in range(q[1]):  # iterate over number of edges of given length to add
                     # convert the init and goal to tensor
-                    tensor_start1 = torch.from_numpy(np.array(self.x_init)).type(torch.FloatTensor)
+                    tensor_start1 = torch.from_numpy(np.array(self.x_lstm)).type(torch.FloatTensor)
                     tensor_start2 = torch.from_numpy(np.array(self.x_goal)).type(torch.FloatTensor)
+
                     # concatenate the tensor of encoded obstacles, init and goal
                     input_data = torch.cat((self.encoded_obs, tensor_start1, tensor_start2))
                     input_data = input_data.view(-1, 1, 32)
@@ -154,7 +157,9 @@ class RRTStarBidirectional_LSTM(RRTStar):
                     x_new, x_nearest = self.new_and_near_nn(0, q, input_data, self.num_attempt)
                     if x_new is None:
                         continue
-                    
+                    else:
+                        self.x_lstm = x_new
+
                     # get nearby vertices and cost-to-come
                     L_near = self.get_nearby_vertices(0, self.x_init, x_new)
 
